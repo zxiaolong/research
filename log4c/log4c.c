@@ -3,9 +3,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <ctype.h>
 
 #define LOG_OUT_CONSOLE 0b00000001
 #define LOG_OUT_FILE	0b00000010
+
+#define CFG_KEY "LogLevel"
 
 typedef enum
 {
@@ -31,6 +34,7 @@ struct LogContext
 {
 	LogCtrlMode ctrlmode;
 	LogLevel level;
+	LogLevel cfglevel;
 	char env[32];
 	char cfg[32];
 	char outmode;
@@ -39,10 +43,66 @@ struct LogContext
 struct LogContext g_ctx = {
 	LOG_CTRL_MANUAL,
 	LOG_INFO,
+	LOG_INFO,
 	"",
 	"",
 	LOG_OUT_CONSOLE
 };
+
+char *trim(char *str)
+{
+	char *p = str;
+	char *p1;
+	if(p)
+	{
+		p1 = p + strlen(str) - 1;
+		while(*p && isspace(*p)) p++;
+		while(p1 > p && isspace(*p1)) *p1 = '\0';
+	}
+	return p;
+}
+
+void log4c_read_cfg(char *cfg)
+{
+	FILE *fd = NULL;
+	char line[1024] = {0};
+	fd = fopen(cfg, "r");
+	if(NULL == fd) return;
+
+	char value[32] = {0};
+	while(!feof(fd)){
+		fgets(line, 1024, fd);
+		char *key = strstr(line, CFG_KEY);
+		if(NULL == key) continue;
+
+		char *equal = strstr(key, "="); 
+		if(NULL == equal)  continue;
+
+		if(0 == strlen(equal)) continue;
+
+		strcpy(value, equal+1);
+		char *trimvalue = trim(value);
+
+		if(0 == strcmp(trimvalue, "trace")){
+			g_ctx.cfglevel = LOG_TRACE;
+		}
+		else if(0 == strcmp(trimvalue, "debug")){
+			g_ctx.cfglevel = LOG_DEBUG;
+		}
+		else if(0 == strcmp(trimvalue, "info")){
+			g_ctx.cfglevel = LOG_INFO;
+		}
+		else if(0 == strcmp(trimvalue, "warn")){
+			g_ctx.cfglevel = LOG_WARN;
+		}
+		else if(0 == strcmp(trimvalue, "error")){
+			g_ctx.cfglevel = LOG_ERROR;
+		}
+		else if(0 == strcmp(trimvalue, "fatal")){
+			g_ctx.cfglevel = LOG_FATAL;
+		}
+	}
+}
 
 /*
  * export ENV_NAME=$(ENV_VALUE)
@@ -65,6 +125,8 @@ void log4c_set_log_cfg(char *cfg)
 {
 	g_ctx.ctrlmode = LOG_CTRL_CFG;
 	strcpy(g_ctx.cfg, cfg);
+
+	log4c_read_cfg(g_ctx.cfg);
 }
 
 void log4c_set_out_mode(char mode)
@@ -121,7 +183,9 @@ int log4c_check(LogLevel level)
 	}
 	else if(LOG_CTRL_CFG == g_ctx.ctrlmode)
 	{
-		return 0;
+		if (level < g_ctx.cfglevel) {
+			return 0;
+		}
 	}
 
 	return 1;
@@ -166,7 +230,7 @@ int main(int argc, char argv[])
 	log4c_e("%s", "error info");
 	log4c_f("%s", "fatal info");
 
-	log4c_set_log_cfg("/etc/log4c.cfg");
+	log4c_set_log_cfg("log4c.cfg");
 
 	log4c_t("%s", "trace info");
 	log4c_d("%s", "debug info");
