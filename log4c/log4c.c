@@ -38,6 +38,8 @@ struct LogContext
 	char env[32];
 	char cfg[32];
 	char outmode;
+	char logpath[256];
+	FILE *fd;
 };
 
 struct LogContext g_ctx = {
@@ -46,7 +48,9 @@ struct LogContext g_ctx = {
 	LOG_INFO,
 	"",
 	"",
-	LOG_OUT_CONSOLE
+	LOG_OUT_CONSOLE,
+	"",
+	NULL
 };
 
 char *trim(char *str)
@@ -129,6 +133,27 @@ void log4c_set_log_cfg(char *cfg)
 	log4c_read_cfg(g_ctx.cfg);
 }
 
+void log4c_set_logpath(char *path)
+{
+	strcpy(g_ctx.logpath, path);
+	if(0 != strcmp(g_ctx.logpath, ""))
+	{
+		g_ctx.fd = fopen(g_ctx.logpath, "w+");
+		if(NULL == g_ctx.fd) {
+			printf("fail to open logfile %s\n", g_ctx.logpath);	
+		}
+	}
+}
+
+void log4c_init()
+{
+}
+
+void log4c_deinit()
+{
+	if(g_ctx.fd) fclose(g_ctx.fd);
+}
+
 void log4c_set_out_mode(char mode)
 {
 	g_ctx.outmode = mode;
@@ -208,10 +233,16 @@ void log4c(LogLevel level, const char *fmt, ...)
 	va_end(args);
 
 	printf("%s [%-5s]: %s\n", buf_t, level_names[level], buf);
+
+	if(g_ctx.fd) {
+		fprintf(g_ctx.fd, "%s [%-5s]: %s\n", buf_t, level_names[level], buf);
+		fflush(g_ctx.fd);
+	}
 }
 
 int main(int argc, char argv[])
 {
+	log4c_init();
 	log4c_set_log_level(LOG_ERROR);
 
 	log4c_t("%s", "trace info");
@@ -238,6 +269,17 @@ int main(int argc, char argv[])
 	log4c_w("%s", "warn info");
 	log4c_e("%s", "error info");
 	log4c_f("%s", "fatal info");
+
+	log4c_set_logpath("./log4c.log");
+
+	log4c_t("%s", "trace info");
+	log4c_d("%s", "debug info");
+	log4c_i("%s", "info info");
+	log4c_w("%s", "warn info");
+	log4c_e("%s", "error info");
+	log4c_f("%s", "fatal info");
+
+	log4c_deinit();
 
 	return 0;
 }
