@@ -4,42 +4,12 @@
 #include <string.h>
 #include <time.h>
 #include <ctype.h>
-
-#define LOG_OUT_CONSOLE 0b00000001
-#define LOG_OUT_FILE	0b00000010
+#include "log4c.h"
 
 #define CFG_KEY "LogLevel"
 
-typedef enum
-{
-	LOG_TRACE,
-	LOG_DEBUG,
-	LOG_INFO,
-	LOG_WARN,
-	LOG_ERROR,
-	LOG_FATAL
-} LogLevel;
-
 static const char *level_names[] = {
   "TRACE", "DEBUG", "INFO", "WARN", "ERROR", "FATAL"
-};
-
-typedef enum {
-	LOG_CTRL_ENV,
-	LOG_CTRL_MANUAL,
-	LOG_CTRL_CFG,
-} LogCtrlMode;
-
-struct LogContext
-{
-	LogCtrlMode ctrlmode;
-	LogLevel level;
-	LogLevel cfglevel;
-	char env[32];
-	char cfg[32];
-	char outmode;
-	char logpath[256];
-	FILE *fd;
 };
 
 struct LogContext g_ctx = {
@@ -240,46 +210,3 @@ void log4c(LogLevel level, const char *fmt, ...)
 	}
 }
 
-int main(int argc, char argv[])
-{
-	log4c_init();
-	log4c_set_log_level(LOG_ERROR);
-
-	log4c_t("%s", "trace info");
-	log4c_d("%s", "debug info");
-	log4c_i("%s", "info info");
-	log4c_w("%s", "warn info");
-	log4c_e("%s", "error info");
-	log4c_f("%s", "fatal info");
-	
-	log4c_set_log_env("LOG4C");
-
-	log4c_t("%s", "trace info");
-	log4c_d("%s", "debug info");
-	log4c_i("%s", "info info");
-	log4c_w("%s", "warn info");
-	log4c_e("%s", "error info");
-	log4c_f("%s", "fatal info");
-
-	log4c_set_log_cfg("log4c.cfg");
-
-	log4c_t("%s", "trace info");
-	log4c_d("%s", "debug info");
-	log4c_i("%s", "info info");
-	log4c_w("%s", "warn info");
-	log4c_e("%s", "error info");
-	log4c_f("%s", "fatal info");
-
-	log4c_set_logpath("./log4c.log");
-
-	log4c_t("%s", "trace info");
-	log4c_d("%s", "debug info");
-	log4c_i("%s", "info info");
-	log4c_w("%s", "warn info");
-	log4c_e("%s", "error info");
-	log4c_f("%s", "fatal info");
-
-	log4c_deinit();
-
-	return 0;
-}
