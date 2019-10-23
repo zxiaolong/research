@@ -1,5 +1,12 @@
-all:
-	gcc sys_daemon.c -o sys_daemon
-	gcc sys_bg.c -o sys_bg
+
+all: fiforead fifowrite
+
+fiforead:
+	@gcc fiforead.c -o fiforead
+
+fifowrite:
+	@gcc fifowrite.c -o fifowrite
+
 clean:
-	rm sys_daemon sys_bg
+	-@rm -f fifo task1
+	-@rm -f fiforead fifowrite
