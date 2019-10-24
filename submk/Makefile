@@ -5,6 +5,7 @@ include ./include/base.mk
 
 all: subdir
 	@echo "main: TOP_DIR： $(TOP_DIR)"
+	@echo "main: TOOLCHAIN_DIR: $(TOOLCHAIN_DIR)"
 	@touch $(TOP_DIR)/main.touch
 
 subdir:
