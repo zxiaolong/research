@@ -1,0 +1,1 @@
+TOP_DIR=$(dir $(lastword $(MAKEFILE_LIST)))
